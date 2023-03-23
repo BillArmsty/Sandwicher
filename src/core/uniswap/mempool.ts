@@ -4,6 +4,8 @@ import {
   JsonRpcProvider,
   Contract,
   Wallet,
+  TransactionResponse,
+  TransactionReceipt,
 } from "ethers";
 import { sendMessage } from "../telegram/telegram";
 import { CONFIGS } from "../../config";
@@ -17,8 +19,8 @@ import { ROUTER_ABI } from "../../config/abis";
  *
  */
 
-export class Mempool {
-  public wsprovider: WebSocketProvider;
+ class Mempool {
+  public wsProvider: WebSocketProvider;
   public contract: Contract;
   public abi: any;
   public address: string;
@@ -29,11 +31,11 @@ export class Mempool {
   constructor() {
     this.abi = ROUTER_ABI;
     this.address = CONFIGS.CONTRACT_ADDRESS;
-    this.wsprovider = new WebSocketProvider(CONFIGS.WSS_URL);
-    this.contract = new Contract(this.address, this.abi, this.wsprovider);
+    this.wsProvider = new WebSocketProvider(CONFIGS.WSS_URL);
+    this.contract = new Contract(this.address, this.abi, this.wsProvider);
     this.router = CONFIGS.UNISWAP_ROUTER_ADDRESS;
     this.provider = new JsonRpcProvider(CONFIGS.JSON_RPC);
-    this.signer = new Wallet(CONFIGS.PRIVATE_KEY, this.wsprovider);
+    this.signer = new Wallet(CONFIGS.PRIVATE_KEY, this.wsProvider);
   }
 
   /**
@@ -41,31 +43,32 @@ export class Mempool {
    *
    * Listen for the mempool transactions
    */
-  public async monitorMempool() {
-    try {
-      this.wsprovider.on("pending", async (txHash: string) => {
-        let receipt = await this.provider.getTransaction(txHash);
-        let message = `*MEMPOOL ALERT* ${txHash} is a mempool transaction`;
-
-        sendMessage(message);
-        receipt?.hash && this.processMempool(receipt);
-
-      });
-    } catch (error) {
-      console.log(error);
-
-    }
-  }
-
-    /**
-     * Implement the mempool processing here
-     * @param receipt
-     */
-    public async processMempool(receipt: any) {
-        try {
-          
-        } catch (error) {
-          console.log(error);
-        }
+   monitorMempool = async () => {
+    let wsProvider = new WebSocketProvider(CONFIGS.WSS_URL);
+    wsProvider.on('pending', async (hash) => {
+      try {
+        let receipt = await wsProvider.getTransactionReceipt(hash);
+        receipt && this.processMempool(receipt);
+      } catch (error) {
+        console.log(error);
       }
+    });
+  };
+
+  /**
+   * Implement the mempool transaction processing here
+   * @param receipt
+   * 
+   * Process the mempool transactions
+   */
+
+  processMempool = async (receipt: TransactionReceipt) => {
+    
+    console.info(`Processing mempool transaction: ${receipt.hash}`);
+    }
+  
+
+ 
 }
+
+export  const mempool = new Mempool();
