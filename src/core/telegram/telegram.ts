@@ -4,6 +4,13 @@ import { normalizeMessage } from "../../helpers/telegram";
 
 const bot = new Telegraf(CONFIGS.BOT_TOKEN);
 
+
+bot.start((ctx: Context) => {
+  return ctx.reply(
+    "Welcome to the Sandwicher Bot",
+  );
+});
+
 bot.use(async (ctx: Context, next) => {
   try {
     let userId = ctx.message?.from?.id || "";
